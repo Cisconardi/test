@@ -46,26 +46,27 @@ async def run_screaming_frog_crawl(crawl_id: str, request: CrawlRequest):
     os.makedirs(crawl_output_dir, exist_ok=True)
 
     # --- INIZIO MODIFICA PER LA GESTIONE DELLA LICENZA ---
-    sf_user_dir = os.path.expanduser("~/.screamingfrog/seospider/")
+sf_user_dir = os.path.expanduser("~/.screamingfrog/seospider/")
     os.makedirs(sf_user_dir, exist_ok=True)
 
-    sf_licence_key = os.getenv("SF_LICENCE_KEY") # Legge la chiave dalla variabile d'ambiente
-    if sf_licence_key:
+    sf_licence_name = os.getenv("SF_LICENSE_NAME") # Legge il nome dalla variabile d'ambiente
+    sf_licence_key = os.getenv("SF_LICENCE_KEY")   # Legge la chiave dalla variabile d'ambiente
+
+    if sf_licence_name and sf_licence_key:
         licence_file_path = os.path.join(sf_user_dir, "licence.txt")
         try:
             with open(licence_file_path, "w") as f:
-                f.write(sf_licence_key)
-            print(f"Licenza Screaming Frog scritta con successo in {licence_file_path}")
+                f.write(sf_licence_name + "\n") # Scrive il nome
+                f.write(sf_licence_key + "\n")  # Scrive la chiave
+            print(f"Licenza Screaming Frog (nome e chiave) scritta con successo in {licence_file_path}")
         except IOError as e:
-            # Gestione errori in caso non si riesca a scrivere il file
             active_crawls[crawl_id].error_message = f"Errore scrittura licenza: {e}"
             active_crawls[crawl_id].status = "failed"
             print(f"ERRORE: Impossibile scrivere il file di licenza: {e}")
             return # Termina la funzione se non si può scrivere la licenza
     else:
-        # Messaggio di avviso se la variabile d'ambiente non è impostata
-        print("ATTENZIONE: Variabile d'ambiente SF_LICENCE_KEY non trovata. Il crawl sarà limitato a 500 URL.")
-        # Non falliamo il crawl subito, ma avvisiamo. Screaming Frog fallirà se supera i 500 URL senza licenza.
+        # Messaggio di avviso se una delle variabili d'ambiente non è impostata
+        print("ATTENZIONE: Variabili d'ambiente SF_LICENSE_NAME o SF_LICENCE_KEY non trovate. Il crawl sarà limitato a 500 URL.")
     # --- FINE MODIFICA PER LA GESTIONE DELLA LICENZA ---
 
 
