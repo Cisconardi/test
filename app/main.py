@@ -14,31 +14,30 @@ app = FastAPI(title="Screaming Frog CLI API",
 
 # Percorsi interni al container
 CRAWL_DATA_DIR = "/app/data/crawls"
-LICENCE_PATH = "/app/licence.txt"
+# Rimuovi LICENCE_PATH fisso, ora sarà gestito via variabile d'ambiente
 CONFIG_DIR = "/app/config"
 
 # Assicurati che le directory esistano all'avvio
 os.makedirs(CRAWL_DATA_DIR, exist_ok=True)
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
-# Modello per la richiesta di crawl
+# Modello per la richiesta di crawl (resta invariato)
 class CrawlRequest(BaseModel):
     url: str
-    config_file: str = "default_config.seospider" # Nome del file di configurazione in /app/config
-    export_format: str = "csv" # 'csv' o 'json'
-    export_type: str = "all_links" # 'all_links', 'internal_all', 'external_all', 'all' etc.
-                                    # Controlla la documentazione CLI di SF per le opzioni
+    config_file: str = "default_config.seospider"
+    export_format: str = "csv"
+    export_type: str = "all_links"
 
-# Modello per lo stato del crawl
+# Modello per lo stato del crawl (resta invariato)
 class CrawlStatus(BaseModel):
     crawl_id: str
-    status: str # 'running', 'completed', 'failed'
+    status: str
     url: str
     output_path: str = None
     error_message: str = None
     results_ready: bool = False
 
-# Dizionario per tenere traccia dei crawl in corso (in-memory, per sistemi più grandi usa un DB/Redis)
+# Dizionario per tenere traccia dei crawl in corso (resta invariato)
 active_crawls = {}
 
 # Funzione per eseguire il crawl in background
@@ -46,22 +45,40 @@ async def run_screaming_frog_crawl(crawl_id: str, request: CrawlRequest):
     crawl_output_dir = os.path.join(CRAWL_DATA_DIR, crawl_id)
     os.makedirs(crawl_output_dir, exist_ok=True)
 
-    # Copia la licenza nella directory utente di Screaming Frog
+    # --- INIZIO MODIFICA PER LA GESTIONE DELLA LICENZA ---
     sf_user_dir = os.path.expanduser("~/.screamingfrog/seospider/")
     os.makedirs(sf_user_dir, exist_ok=True)
-    if os.path.exists(LICENCE_PATH):
-        shutil.copy(LICENCE_PATH, os.path.join(sf_user_dir, "licence.txt"))
-    else:
-        print(f"ATTENZIONE: Licenza non trovata in {LICENCE_PATH}. Il crawl sarà limitato a 500 URL.")
 
-    # Costruisci il comando base per Screaming Frog CLI
+    sf_licence_key = os.getenv("SF_LICENCE_KEY") # Legge la chiave dalla variabile d'ambiente
+    if sf_licence_key:
+        licence_file_path = os.path.join(sf_user_dir, "licence.txt")
+        try:
+            with open(licence_file_path, "w") as f:
+                f.write(sf_licence_key)
+            print(f"Licenza Screaming Frog scritta con successo in {licence_file_path}")
+        except IOError as e:
+            # Gestione errori in caso non si riesca a scrivere il file
+            active_crawls[crawl_id].error_message = f"Errore scrittura licenza: {e}"
+            active_crawls[crawl_id].status = "failed"
+            print(f"ERRORE: Impossibile scrivere il file di licenza: {e}")
+            return # Termina la funzione se non si può scrivere la licenza
+    else:
+        # Messaggio di avviso se la variabile d'ambiente non è impostata
+        print("ATTENZIONE: Variabile d'ambiente SF_LICENCE_KEY non trovata. Il crawl sarà limitato a 500 URL.")
+        # Non falliamo il crawl subito, ma avvisiamo. Screaming Frog fallirà se supera i 500 URL senza licenza.
+    # --- FINE MODIFICA PER LA GESTIONE DELLA LICENZA ---
+
+
+    # Costruisci il comando base per Screaming Frog CLI (resto invariato)
     command = [
         "screamingfrogseospider",
         "--crawl", request.url,
         "--headless",
         "--output-folder", crawl_output_dir,
-        "--timestamped-output", # Garantisce nomi di file unici e non sovrascritti
+        "--timestamped-output",
     ]
+
+    # ... (resto della logica per config_file, export_format, esecuzione subprocess, etc. - resta invariato) ...
 
     # Aggiungi il file di configurazione se specificato e presente
     config_full_path = os.path.join(CONFIG_DIR, request.config_file)
