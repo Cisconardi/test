@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  screaming-frog-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mappa la cartella 'data' sul tuo host alla cartella '/app/data' nel container.
+      # Questo è FONDAMENTALE per rendere i risultati dei crawl persistenti e accessibili dall'esterno.
+      - ./data:/app/data
+      # Mappa la licenza direttamente nella root del container per il Dockerfile
+      - ./licence.txt:/app/licence.txt:ro
+      # Mappa la cartella config per configurazioni dinamiche
+      - ./config:/app/config:ro
+    environment:
+      # Puoi passare variabili d'ambiente se necessario
+      PYTHONUNBUFFERED: 1 # Per output di log in tempo reale
+    restart: unless-stopped
