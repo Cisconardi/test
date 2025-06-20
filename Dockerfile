@@ -36,9 +36,6 @@ RUN wget ${SF_URL} -O /tmp/${SF_FILENAME} \
 # Copia l'applicazione FastAPI
 COPY app/ ./app/
 
-# Copia la licenza (se esiste) nella root del container
-COPY licence.txt /app/licence.txt
-
 # Copia la cartella config (se esiste)
 COPY config/ ./config/
 
