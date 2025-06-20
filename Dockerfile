@@ -26,8 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Scarica e installa Screaming Frog SEO Spider CLI
 # Controlla sempre l'ultima versione disponibile sul sito di Screaming Frog!
 ARG SF_VERSION="19.1" # Aggiorna questo numero di versione
-ARG SF_FILENAME="ScreamingFrogSEOSpider-${SF_VERSION}.deb"
-ARG SF_URL="https://download.screamingfrog.co.uk/products/${SF_VERSION}/${SF_FILENAME}"
+ARG SF_FILENAME="screamingfrogseospider_${SF_VERSION}.deb"
+ARG SF_URL="https://download.screamingfrog.co.uk/products/seo-spider/${SF_VERSION}/${SF_FILENAME}"
 
 RUN wget ${SF_URL} -O /tmp/${SF_FILENAME} \
     && dpkg -i /tmp/${SF_FILENAME} \
