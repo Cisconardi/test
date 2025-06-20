@@ -76,6 +76,7 @@ async def run_screaming_frog_crawl(crawl_id: str, request: CrawlRequest):
         "--headless",
         "--output-folder", crawl_output_dir,
         "--timestamped-output",
+      "--accepteula",
     ]
 
     # ... (resto della logica per config_file, export_format, esecuzione subprocess, etc. - resta invariato) ...
